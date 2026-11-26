@@ -12,18 +12,23 @@ fi
 [[ -n "$CHROME" ]] || { echo "Chrome not found; pass its path as the first argument" >&2; exit 2; }
 
 PORT=${PORT:-8765}
+URL="http://127.0.0.1:$PORT/tests/harness.html"
 python3 -m http.server "$PORT" --bind 127.0.0.1 >/dev/null 2>&1 &
 SERVER=$!
-trap 'kill $SERVER 2>/dev/null || true; rm -rf "$PROFILE"' EXIT
 PROFILE=$(mktemp -d)
-sleep 1
+trap 'kill $SERVER 2>/dev/null || true; rm -rf "$PROFILE"' EXIT
+for _ in $(seq 1 50); do curl -fs -o /dev/null "$URL" && break; sleep 0.2; done
+curl -fs -o /dev/null "$URL" || { echo "Test server did not start on port $PORT" >&2; exit 1; }
 
-OUT=$("$CHROME" --headless=new --disable-gpu --no-first-run --user-data-dir="$PROFILE" \
-  --window-size=1280,800 --virtual-time-budget=15000 --dump-dom \
-  "http://127.0.0.1:$PORT/tests/harness.html" 2>/dev/null)
-
-JSON=$(printf '%s' "$OUT" | grep -o '<pre id="results">WVFS_RESULTS .*' | sed 's/^<pre id="results">WVFS_RESULTS //; s/<\/pre>.*$//' | sed 's/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g')
-[[ -n "$JSON" ]] || { echo "No results found in page output" >&2; exit 1; }
+JSON=""
+for attempt in 1 2 3; do
+  OUT=$("$CHROME" --headless=new --disable-gpu --no-first-run --no-sandbox --user-data-dir="$PROFILE/$attempt" \
+    --window-size=1280,800 --virtual-time-budget=15000 --dump-dom "$URL" 2>/dev/null || true)
+  JSON=$(printf '%s' "$OUT" | grep -o '<pre id="results">WVFS_RESULTS .*' | sed 's/^<pre id="results">WVFS_RESULTS //; s/<\/pre>.*$//' | sed 's/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g' || true)
+  [[ -n "$JSON" ]] && break
+  echo "Attempt $attempt: no results from Chrome, retrying" >&2
+done
+[[ -n "$JSON" ]] || { echo "No results found in page output. Last output:" >&2; printf '%s\n' "$OUT" | tail -5 >&2; exit 1; }
 printf '%s' "$JSON" | node -e '
   let s = ""; process.stdin.on("data", d => s += d).on("end", () => {
     const r = JSON.parse(s);
