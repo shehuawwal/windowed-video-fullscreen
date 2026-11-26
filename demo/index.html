@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Windowed Video Fullscreen — test page</title>
+<style>
+  body { font: 15px/1.5 system-ui, sans-serif; max-width: 860px; margin: 0 auto; padding: 24px; color: #222; }
+  h1 { font-size: 22px; }
+  section { border: 1px solid #ddd; border-radius: 10px; padding: 16px; margin: 18px 0; }
+  h2 { font-size: 16px; margin: 0 0 4px; }
+  p { margin: 4px 0 12px; color: #555; }
+  video { width: 480px; max-width: 100%; aspect-ratio: 16 / 9; background: #000; display: block; }
+  .player { position: relative; width: 480px; max-width: 100%; }
+  .bar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; gap: 8px; padding: 8px; background: linear-gradient(transparent, rgba(0,0,0,.7)); }
+  .bar button { background: rgba(255,255,255,.2); color: #fff; border: 0; border-radius: 4px; padding: 4px 10px; cursor: pointer; }
+  .transformed { transform: translateZ(0) scale(1); filter: saturate(1); overflow: hidden; border-radius: 10px; width: 480px; }
+  iframe { width: 500px; max-width: 100%; height: 300px; border: 1px solid #ccc; }
+  #log { font: 12px ui-monospace, monospace; background: #f5f5f5; padding: 10px; border-radius: 8px; height: 120px; overflow: auto; white-space: pre-wrap; }
+  .tall { height: 600px; }
+</style>
+</head>
+<body>
+<h1>Windowed Video Fullscreen — test page</h1>
+<p>Serve this folder (<code>python3 -m http.server</code> in the repo root, then open
+  <code>http://localhost:8000/demo/</code>) with the extension loaded. Default shortcut: <b>Ctrl + Shift + F</b> to toggle, <b>Esc</b> to exit.</p>
+
+<section>
+  <h2>1. Built-in video controls</h2>
+  <p>Use the video's own fullscreen button or double-click it (Firefox). It should fill the tab, not the screen.</p>
+  <video id="native" controls muted loop></video>
+</section>
+
+<section>
+  <h2>2. Custom player that exits on click (badly behaved site)</h2>
+  <p>Click the video: this player calls <code>exitFullscreen()</code> on every click. With "Clicking the video never exits" on, it stays windowed. The ✕ button still exits.</p>
+  <div class="player" id="custom">
+    <video id="customVideo" muted loop></video>
+    <div class="bar">
+      <button id="play">Play/Pause</button>
+      <button id="fs">⛶ Fullscreen</button>
+      <button id="exitfs" aria-label="Exit fullscreen">✕ Exit</button>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>3. Player inside a transformed, clipped container (social-feed style)</h2>
+  <p>Transforms on a parent usually break "fixed" positioning. The player should still cover the whole tab.</p>
+  <div class="transformed"><div class="player" id="feedPlayer"><video id="feedVideo" muted loop></video>
+    <div class="bar"><button class="fsbtn">⛶ Fullscreen</button></div></div></div>
+</section>
+
+<section>
+  <h2>4. Player wrapped in a link</h2>
+  <p>While windowed, clicking the video must not follow the link (the URL should not change to <code>#you-left</code>).</p>
+  <a href="#you-left"><div class="player" id="linkPlayer"><video id="linkVideo" muted loop></video>
+    <div class="bar"><button class="fsbtn">⛶ Fullscreen</button></div></div></a>
+</section>
+
+<section>
+  <h2>5. Embedded player (iframe)</h2>
+  <p>The iframe should grow to fill the tab, and its video to fill the iframe.</p>
+  <iframe id="frame" title="Embedded player" allowfullscreen srcdoc='<!doctype html>
+<style>body{margin:0;background:#111;font:13px sans-serif;color:#fff}video{width:100%;height:240px;display:block;background:#000}button{margin:6px}</style>
+<video id="v" muted loop></video><button id="b">⛶ Fullscreen (inside iframe)</button>
+<script>
+const c=document.createElement("canvas");c.width=640;c.height=360;const x=c.getContext("2d");let t=0;
+(function d(){t++;x.fillStyle="hsl("+(t%360)+",60%,35%)";x.fillRect(0,0,640,360);x.fillStyle="#fff";x.font="bold 40px sans-serif";x.fillText("iframe video "+t,40,190);requestAnimationFrame(d)})();
+const v=document.getElementById("v");v.srcObject=c.captureStream(30);v.play();
+document.getElementById("b").onclick=()=>v.requestFullscreen();
+</script>'></iframe>
+</section>
+
+<section>
+  <h2>Event log</h2>
+  <div id="log"></div>
+</section>
+<div class="tall"></div>
+
+<script>
+  const log = (m) => { const el = document.getElementById("log"); el.textContent += new Date().toLocaleTimeString() + "  " + m + "\n"; el.scrollTop = el.scrollHeight; };
+  document.addEventListener("fullscreenchange", () => {
+    const el = document.fullscreenElement;
+    log("fullscreenchange → " + (el ? "<" + el.tagName.toLowerCase() + (el.id ? "#" + el.id : "") + ">" : "none"));
+  });
+
+  // Animated test pattern so no video files are needed.
+  function feed(video, label, hue) {
+    const c = document.createElement("canvas"); c.width = 1280; c.height = 720;
+    const x = c.getContext("2d"); let t = 0;
+    (function draw() {
+      t++;
+      x.fillStyle = `hsl(${(hue + t / 2) % 360}, 55%, 30%)`; x.fillRect(0, 0, 1280, 720);
+      x.fillStyle = "#fff"; x.font = "bold 72px system-ui"; x.fillText(label, 60, 340);
+      x.font = "40px ui-monospace, monospace"; x.fillText("frame " + t, 60, 420);
+      x.fillRect((t * 6) % 1280, 640, 80, 20);
+      requestAnimationFrame(draw);
+    })();
+    video.srcObject = c.captureStream(30);
+    video.play().catch(() => {});
+  }
+  feed(document.getElementById("native"), "Built-in controls", 200);
+  feed(document.getElementById("customVideo"), "Custom player", 20);
+  feed(document.getElementById("feedVideo"), "Transformed feed", 120);
+  feed(document.getElementById("linkVideo"), "Wrapped in a link", 280);
+
+  const custom = document.getElementById("custom");
+  const cv = document.getElementById("customVideo");
+  document.getElementById("fs").onclick = () => custom.requestFullscreen();
+  document.getElementById("exitfs").onclick = () => document.exitFullscreen();
+  document.getElementById("play").onclick = () => (cv.paused ? cv.play() : cv.pause());
+  cv.addEventListener("click", () => {
+    log("custom player: video clicked, site calls exitFullscreen()");
+    if (document.fullscreenElement) document.exitFullscreen();
+  });
+
+  for (const btn of document.querySelectorAll(".fsbtn")) {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      const p = btn.closest(".player");
+      document.fullscreenElement ? document.exitFullscreen() : p.requestFullscreen();
+    });
+  }
+  window.addEventListener("hashchange", () => log("navigated to " + location.hash + "  ← link was followed"));
+</script>
+</body>
+</html>

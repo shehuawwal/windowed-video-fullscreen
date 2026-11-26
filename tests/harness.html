@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>wvfs harness</title>
+<!-- page.js runs first, as it does at document_start in the extension. -->
+<script src="../src/page.js"></script>
+<style>
+  body { margin: 0; font: 13px sans-serif; }
+  .feed { transform: translateX(0); filter: blur(0); overflow: hidden; width: 500px; margin: 40px; position: relative; z-index: 1; }
+  .player { width: 400px; height: 225px; background: #333; position: relative; }
+  .player video { width: 400px; height: 225px; display: block; }
+  iframe { width: 420px; height: 260px; border: 1px solid #999; }
+  .tall { height: 3000px; }
+</style>
+</head>
+<body>
+<div class="feed" id="feed1">
+  <div class="video-player player" id="p1">
+    <video id="v1" muted></video>
+    <button id="exitBtn" aria-label="Exit full screen">x</button>
+  </div>
+</div>
+
+<div class="feed" id="feed2">
+  <a href="#navigated" id="link">
+    <div class="video-player player" id="p2"><video id="v2" muted></video></div>
+  </a>
+</div>
+
+<div class="feed" id="feed3"><div id="slot3"><div class="player" id="p3"><video id="v3" muted></video></div></div></div>
+
+<iframe id="frame" srcdoc='<!doctype html><script src="../src/page.js"></script><style>body{margin:0}video{width:400px;height:225px}</style><video id="cv" muted></video>'></iframe>
+
+<div class="tall"></div>
+<pre id="results"></pre>
+
+<script>
+(async () => {
+  const results = [];
+  const ok = (name, cond, extra) => results.push({ name, pass: !!cond, extra });
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const $ = (id) => document.getElementById(id);
+  const fills = (el) => {
+    const r = el.getBoundingClientRect();
+    return Math.abs(r.left) < 1 && Math.abs(r.top) < 1 && Math.abs(r.width - innerWidth) < 2 && Math.abs(r.height - innerHeight) < 2;
+  };
+  const key = (code, mods = {}) =>
+    document.body.dispatchEvent(new KeyboardEvent("keydown", { code, key: code, bubbles: true, cancelable: true, ...mods }));
+  const settings = (s) => document.dispatchEvent(new CustomEvent("wvfs:settings", { detail: JSON.stringify(s) }));
+
+  try {
+    // 1. Request on a player wrapper inside a transformed, overflow-hidden feed.
+    let changes = 0;
+    document.addEventListener("fullscreenchange", () => changes++);
+    const p1StyleBefore = $("p1").getAttribute("style");
+    const feedStyleBefore = $("feed1").getAttribute("style");
+    await $("p1").requestFullscreen();
+    ok("enter: fullscreenElement is the requested element", document.fullscreenElement === $("p1"));
+    ok("enter: player fills the viewport despite transformed ancestor", fills($("p1")), JSON.stringify($("p1").getBoundingClientRect()));
+    ok("enter: video fills the player", fills($("v1")));
+    ok("enter: fullscreenchange fired", changes === 1);
+    ok("enter: page scroll locked", getComputedStyle(document.documentElement).overflow === "hidden");
+
+    // 2. Click protection: a click on the video that makes the site call exitFullscreen is ignored.
+    $("v1").addEventListener("click", () => document.exitFullscreen());
+    $("v1").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    ok("click on video does not exit", document.fullscreenElement === $("p1"));
+    $("v1").dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+    ok("double-click on video does not exit", document.fullscreenElement === $("p1"));
+
+    // 3. The player's own exit button still works.
+    $("exitBtn").addEventListener("click", () => document.exitFullscreen());
+    $("exitBtn").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    ok("player's exit button exits", document.fullscreenElement === null);
+    ok("exit: styles restored on player", $("p1").getAttribute("style") === p1StyleBefore, $("p1").getAttribute("style"));
+    ok("exit: styles restored on ancestor", $("feed1").getAttribute("style") === feedStyleBefore, $("feed1").getAttribute("style"));
+    ok("exit: fullscreenchange fired again", changes === 2);
+
+    // 4. exitFullscreen from code (no recent click) works.
+    await sleep(700);
+    await $("p1").requestFullscreen();
+    await document.exitFullscreen();
+    ok("programmatic exit works", document.fullscreenElement === null);
+
+    // 5. Default keyboard shortcuts.
+    key("KeyF", { ctrlKey: true, shiftKey: true });
+    ok("Ctrl+Shift+F enters", document.fullscreenElement instanceof HTMLVideoElement, String(document.fullscreenElement && document.fullscreenElement.id));
+    const picked = document.fullscreenElement;
+    ok("shortcut on a <video> windows its player wrapper", picked && fills(picked.closest(".player")));
+    key("Escape");
+    ok("Escape exits", document.fullscreenElement === null);
+
+    // 6. Custom shortcuts from settings.
+    settings({ shortcuts: { toggle: [{ code: "KeyG", ctrl: false, shift: false, alt: false, meta: false }], exit: [] } });
+    key("KeyF", { ctrlKey: true, shiftKey: true });
+    ok("old shortcut no longer works", document.fullscreenElement === null);
+    key("KeyG");
+    ok("custom shortcut G enters", document.fullscreenElement !== null);
+    key("Escape");
+    ok("Escape does nothing when exit list is empty", document.fullscreenElement !== null);
+    key("KeyG");
+    ok("custom shortcut G exits", document.fullscreenElement === null);
+    const input = document.createElement("input");
+    document.body.append(input);
+    input.focus();
+    input.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyG", key: "g", bubbles: true, cancelable: true }));
+    ok("shortcut ignored while typing", document.fullscreenElement === null);
+    input.remove();
+    settings({ shortcuts: { toggle: [{ code: "KeyF", ctrl: true, shift: true }], exit: [{ code: "Escape" }] } });
+
+    // 7. A link around the player doesn't navigate when the video is clicked.
+    await $("v2").requestFullscreen();
+    const ev = new MouseEvent("click", { bubbles: true, cancelable: true, button: 0 });
+    $("v2").dispatchEvent(ev);
+    ok("wrapping link click is cancelled", ev.defaultPrevented && location.hash !== "#navigated");
+    await sleep(700);
+    await document.exitFullscreen();
+
+    // 8. Site re-renders the player: stay windowed on the new video.
+    await $("v3").requestFullscreen();
+    const fresh = document.createElement("div");
+    fresh.className = "player";
+    fresh.innerHTML = '<video id="v3b" muted></video>';
+    $("p3").replaceWith(fresh);
+    await sleep(400);
+    ok("re-render: still active on the new video", document.fullscreenElement === $("v3b"), String(document.fullscreenElement && document.fullscreenElement.id));
+    ok("re-render: new video fills the viewport", fills($("v3b")));
+    await sleep(700);
+    await document.exitFullscreen();
+
+    // 9. Overlay mode.
+    settings({ mode: "overlay" });
+    await $("p1").requestFullscreen();
+    ok("overlay: player moved into overlay", !!$("p1").closest("[data-wvfs-overlay]") && fills($("p1")));
+    await document.exitFullscreen();
+    ok("overlay: player put back", $("p1").parentElement === $("feed1") && !document.querySelector("[data-wvfs-overlay]"));
+    settings({ mode: "inplace" });
+
+    // 10. Iframe: child fullscreen maximises the <iframe> in the parent.
+    const fwin = $("frame").contentWindow;
+    await fwin.document.getElementById("cv").requestFullscreen();
+    await sleep(100);
+    ok("iframe: parent reports the iframe as fullscreen", document.fullscreenElement === $("frame"));
+    ok("iframe: iframe fills the viewport", fills($("frame")));
+    ok("iframe: child video fills the iframe", fills.call(null, fwin.document.getElementById("cv")) || (() => {
+      const r = fwin.document.getElementById("cv").getBoundingClientRect();
+      return Math.abs(r.width - fwin.innerWidth) < 2 && Math.abs(r.height - fwin.innerHeight) < 2;
+    })());
+    key("Escape"); // pressed in the parent
+    await sleep(100);
+    ok("iframe: Escape in parent exits parent", document.fullscreenElement === null);
+    ok("iframe: ...and the child", fwin.document.fullscreenElement === null);
+    await fwin.document.getElementById("cv").requestFullscreen();
+    await sleep(100);
+    await fwin.document.exitFullscreen();
+    await sleep(100);
+    ok("iframe: child exit also restores the parent", document.fullscreenElement === null);
+
+    // 11. Disabled: falls through to the native API.
+    settings({ enabled: false });
+    let rejected = false;
+    try { await $("p1").requestFullscreen(); } catch (_) { rejected = true; }
+    ok("disabled: native fullscreen used (rejects without a user gesture)", rejected && document.fullscreenElement === null);
+    settings({ enabled: true, siteDisabled: true });
+    key("KeyF", { ctrlKey: true, shiftKey: true });
+    ok("site disabled: shortcut does nothing", document.fullscreenElement === null);
+    settings({ enabled: true, siteDisabled: false });
+  } catch (err) {
+    ok("harness crashed", false, String(err && err.stack || err));
+  }
+
+  const failed = results.filter((r) => !r.pass);
+  $("results").textContent = "WVFS_RESULTS " + JSON.stringify({ passed: results.length - failed.length, failed: failed.length, results });
+})();
+</script>
+</body>
+</html>

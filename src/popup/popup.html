@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Windowed Video Fullscreen</title>
+  <link rel="stylesheet" href="../shared/ui.css">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <img src="../icons/icon-32.png" width="20" height="20" alt="">
+    <h1>Windowed Video Fullscreen</h1>
+  </header>
+
+  <main>
+    <p id="status" class="muted small">Checking this tab…</p>
+
+    <button id="toggle" class="primary" disabled>Toggle windowed fullscreen</button>
+    <p class="small muted">Shortcut: <span id="shortcut"></span></p>
+
+    <div class="rows">
+      <label class="check">
+        <input type="checkbox" id="site">
+        <span>On for <strong id="host">this site</strong></span>
+      </label>
+      <label class="check">
+        <input type="checkbox" id="global">
+        <span>On for all sites</span>
+      </label>
+    </div>
+    <p id="reload" class="small muted" hidden>Already-open players pick this up on their next fullscreen. Reload the page if one acts oddly.</p>
+  </main>
+
+  <footer>
+    <button id="options" class="link">Shortcuts &amp; settings</button>
+  </footer>
+
+  <script src="../shared/settings.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

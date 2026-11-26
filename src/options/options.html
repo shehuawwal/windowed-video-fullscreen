@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Windowed Video Fullscreen — Settings</title>
+  <link rel="stylesheet" href="../shared/ui.css">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="page">
+    <header>
+      <img src="../icons/icon-48.png" width="32" height="32" alt="">
+      <div>
+        <h1>Windowed Video Fullscreen</h1>
+        <p class="muted small">Videos go "fullscreen" inside the browser tab instead of taking over the screen.</p>
+      </div>
+      <span id="saved" class="saved" role="status" aria-live="polite"></span>
+    </header>
+
+    <section aria-labelledby="h-shortcuts">
+      <h2 id="h-shortcuts">Keyboard shortcuts</h2>
+      <p class="muted small">Click <em>Add shortcut</em>, then press the keys. Each action can have more than one shortcut.
+        Shortcuts work on the web page, so a few combinations the browser keeps for itself (such as new tab or close tab) can't be used.</p>
+
+      <div class="action" data-action="toggle">
+        <div class="action-head">
+          <div>
+            <h3>Toggle windowed fullscreen</h3>
+            <p class="muted small">Picks the playing (or largest) visible video on the page.</p>
+          </div>
+          <button class="add">Add shortcut</button>
+        </div>
+        <ul class="bindings"></ul>
+      </div>
+
+      <div class="action" data-action="exit">
+        <div class="action-head">
+          <div>
+            <h3>Exit windowed fullscreen</h3>
+            <p class="muted small">Only acts while a video is windowed.</p>
+          </div>
+          <button class="add">Add shortcut</button>
+        </div>
+        <ul class="bindings"></ul>
+      </div>
+
+      <p id="warning" class="warning small" hidden></p>
+      <button id="reset-shortcuts">Reset shortcuts to defaults</button>
+    </section>
+
+    <section aria-labelledby="h-behaviour">
+      <h2 id="h-behaviour">Behaviour</h2>
+
+      <label class="check">
+        <input type="checkbox" id="enabled">
+        <span><strong>On for all sites</strong><br>
+          <span class="muted small">Turn off to let every site use real fullscreen again.</span></span>
+      </label>
+
+      <label class="check">
+        <input type="checkbox" id="clickProtection">
+        <span><strong>Clicking the video never exits</strong><br>
+          <span class="muted small">Ignores exit requests caused by clicking or double-clicking the video, and stops links around a player from navigating away. The player's own exit-fullscreen button still works.</span></span>
+      </label>
+
+      <label class="check">
+        <input type="checkbox" id="convertNative">
+        <span><strong>Also catch built-in video controls</strong><br>
+          <span class="muted small">The fullscreen button on plain <code>&lt;video controls&gt;</code> players skips the page; this turns real fullscreen into windowed as soon as it starts (you may see a brief flash).</span></span>
+      </label>
+
+      <label class="check">
+        <input type="checkbox" id="ignoreWhileTyping">
+        <span><strong>Ignore the toggle shortcut while typing</strong><br>
+          <span class="muted small">Recommended if your shortcut is a single key.</span></span>
+      </label>
+
+      <fieldset>
+        <legend><strong>Layout method</strong></legend>
+        <label class="check">
+          <input type="radio" name="mode" value="inplace">
+          <span>In place <span class="muted small">(recommended)</span><br>
+            <span class="muted small">Keeps the player where the site put it and stretches it over the page. Site controls and click handlers keep working.</span></span>
+        </label>
+        <label class="check">
+          <input type="radio" name="mode" value="overlay">
+          <span>Overlay<br>
+            <span class="muted small">Moves the player into a black layer on top of the page. Try this if a site's player ends up misplaced.</span></span>
+        </label>
+      </fieldset>
+    </section>
+
+    <section aria-labelledby="h-sites">
+      <h2 id="h-sites">Sites where it's off</h2>
+      <p class="muted small">These sites keep normal fullscreen. A domain also covers its subdomains. You can also switch a site off from the toolbar button.</p>
+      <form id="add-site" class="add-site">
+        <input id="site-input" type="text" placeholder="example.com" autocomplete="off" spellcheck="false" aria-label="Domain">
+        <button type="submit">Add</button>
+      </form>
+      <ul id="sites" class="sites"></ul>
+      <p id="no-sites" class="muted small">None.</p>
+    </section>
+
+    <footer class="muted small">
+      <span id="version"></span> ·
+      <a href="https://github.com/shehuawwal/windowed-video-fullscreen" target="_blank" rel="noopener">Source &amp; issues</a>
+    </footer>
+  </div>
+
+  <script src="../shared/settings.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>
