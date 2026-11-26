@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0 — unreleased
+## 2.0.0 — 2026-11-26
 
 First open-source release; rewrite of the private Firefox-only v1.1.
 

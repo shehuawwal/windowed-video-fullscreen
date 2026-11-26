@@ -38,14 +38,37 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+      AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: Check tag matches manifest version
         run: test "v$(jq -r .version manifests/chrome.json)" = "$GITHUB_REF_NAME"
       - run: ./scripts/build.sh
+      - name: Sign Firefox package (unlisted, only if AMO secrets are set)
+        if: env.AMO_JWT_ISSUER != '' && env.AMO_JWT_SECRET != ''
+        continue-on-error: true
+        run: scripts/sign-firefox.sh
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/*.zip --title "$GITHUB_REF_NAME" \
-            --notes "See CHANGELOG.md. The Firefox zip is unsigned - load it from about:debugging, or sign it on addons.mozilla.org."
+          shopt -s nullglob
+          signed=(dist/*-firefox-signed.xpi)
+          if (( ${#signed[@]} )); then
+            FF="**Firefox:** download the \`.xpi\` and open it in Firefox (or drag it onto a Firefox window) to install permanently."
+          else
+            FF="**Firefox:** no signed build this time. Load the Firefox zip from \`about:debugging\` → This Firefox → Load Temporary Add-on."
+          fi
+          cat > notes.md <<NOTES
+          **Chrome, Edge, Brave, Opera, Vivaldi:** unzip the Chrome zip, open \`chrome://extensions\`, turn on Developer mode, click Load unpacked and pick the folder.
+
+          ${FF}
+
+          Changes: see [CHANGELOG.md](https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/CHANGELOG.md).
+          NOTES
+          gh release create "$GITHUB_REF_NAME" dist/*.zip "${signed[@]}" --title "$GITHUB_REF_NAME" --notes-file notes.md

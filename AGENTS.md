@@ -25,6 +25,7 @@ manifests/
 scripts/
   build.sh             src/ + manifest -> dist/<browser>/ and dist/*.zip
   safari.sh            dist/chrome -> Xcode project (macOS)
+  sign-firefox.sh      sign dist/firefox on AMO (unlisted) -> dist/*-firefox-signed.xpi
   make-icons.py        draws src/icons/*.png with no dependencies
 tests/
   settings.test.mjs    node --test unit tests for shared/settings.js
@@ -88,4 +89,6 @@ When you change behaviour in page.js, add a case to `tests/harness.html`. Then l
 
 1. Bump `version` in `manifests/chrome.json` and `manifests/firefox.json` and update `CHANGELOG.md`.
 2. Commit, then tag `vX.Y.Z` and push the tag. CI tests, builds, and attaches the zips to a GitHub release.
-3. Store submissions (Chrome Web Store, AMO, Edge Add-ons) are manual for now. See docs/PLAN.md.
+3. Firefox: if the repo secrets `AMO_JWT_ISSUER` / `AMO_JWT_SECRET` are set, the release job signs an **unlisted** `.xpi` (`scripts/sign-firefox.sh`) and attaches it. AMO never signs the same version twice, so a version that's already signed needs a version bump. To sign a release made before the secrets existed: `gh workflow run sign-firefox.yml -f tag=vX.Y.Z`.
+4. Firefox add-on ID: `windowed-video-fullscreen@shehuawwal.github.io`. Never change it, or installed copies stop updating.
+5. Store listings (Chrome Web Store, public AMO listing, Edge Add-ons) are manual for now. See docs/PLAN.md.

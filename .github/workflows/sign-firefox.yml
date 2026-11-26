@@ -1,0 +1,33 @@
+name: Sign Firefox build
+
+# Signs an already-released version and attaches the .xpi to its GitHub release.
+# Use it after adding the AMO secrets, without making a new tag:
+#   gh workflow run sign-firefox.yml -f tag=v2.0.0
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to sign (e.g. v2.0.0)
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    env:
+      AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+      AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: ./scripts/build.sh
+      - run: scripts/sign-firefox.sh
+      - name: Attach to release
+        run: gh release upload "${{ inputs.tag }}" dist/*-firefox-signed.xpi --clobber

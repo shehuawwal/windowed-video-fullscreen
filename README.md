@@ -13,6 +13,13 @@ Works in Chrome, Edge, Brave, Opera, Vivaldi, Arc and Firefox. Safari works thro
 - **Per-site off switch** from the toolbar button, plus an off switch for all sites.
 - **Private.** No network requests, no analytics. The only permission is `storage`, for your settings. All-sites access is needed to run on every video page.
 
+## Install a release
+
+Download from the [latest release](https://github.com/shehuawwal/windowed-video-fullscreen/releases/latest):
+
+- **Firefox:** open the `…-firefox-signed.xpi` file in Firefox to install it permanently.
+- **Chrome, Edge, Brave, Opera, Vivaldi, Arc:** unzip `…-chrome.zip`, then follow the Chrome steps below and pick the unzipped folder.
+
 ## Install from source
 
 You need `bash`, `zip` and `jq`, which macOS and most Linux systems include.
