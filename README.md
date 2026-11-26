@@ -81,7 +81,7 @@ If a player acts oddly, press <kbd>Esc</kbd>, reload the page, try the **Overlay
 ## Develop
 
 ```sh
-node --test tests/          # unit tests (settings logic)
+node --test tests/*.test.mjs          # unit tests (settings logic)
 tests/run-harness.sh        # behaviour tests in headless Chrome
 ./scripts/build.sh          # build every browser
 python3 -m http.server      # then open http://localhost:8000/demo/ to test by hand

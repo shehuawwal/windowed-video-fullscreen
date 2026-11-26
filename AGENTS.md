@@ -77,7 +77,7 @@ docs/PLAN.md           roadmap and design decisions
 
 ```sh
 for f in src/*.js src/*/*.js; do node --check "$f"; done
-node --test tests/
+node --test tests/*.test.mjs
 tests/run-harness.sh          # needs Chrome or Chromium installed
 ./scripts/build.sh
 ```

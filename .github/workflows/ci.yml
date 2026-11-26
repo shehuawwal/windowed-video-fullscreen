@@ -20,7 +20,7 @@ jobs:
       - name: Syntax check
         run: for f in src/*.js src/*/*.js; do node --check "$f"; done
       - name: Unit tests
-        run: node --test tests/
+        run: node --test tests/*.test.mjs
       - name: Behaviour tests (headless Chrome)
         run: tests/run-harness.sh "$(which google-chrome || which chromium)"
       - name: Build
