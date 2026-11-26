@@ -2,7 +2,7 @@ name: Submit Firefox build
 
 # Submits an already-released version to addons.mozilla.org without a new tag.
 #   gh workflow run sign-firefox.yml -f tag=v2.1.0                     # public listing (review)
-#   gh workflow run sign-firefox.yml -f tag=v2.1.0 -f channel=unlisted # signed .xpi, attached to the release
+#   gh workflow run sign-firefox.yml -f tag=v2.1.0 -f channel=unlisted # signed .xpi (as 2.1.0.1), attached to the release
 # AMO accepts each version number once, across both channels.
 on:
   workflow_dispatch:
@@ -26,6 +26,7 @@ jobs:
       AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
       AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
       AMO_CHANNEL: ${{ inputs.channel }}
+      AMO_VERSION_SUFFIX: ${{ inputs.channel == 'unlisted' && '.1' || '' }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v7

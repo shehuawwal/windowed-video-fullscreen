@@ -53,13 +53,20 @@ jobs:
         if: env.AMO_JWT_ISSUER != '' && env.AMO_JWT_SECRET != ''
         continue-on-error: true
         run: scripts/sign-firefox.sh
+      - name: Sign a Firefox .xpi for the GitHub release (unlisted, as <version>.1)
+        if: env.AMO_JWT_ISSUER != '' && env.AMO_JWT_SECRET != ''
+        continue-on-error: true
+        env:
+          AMO_CHANNEL: unlisted
+          AMO_VERSION_SUFFIX: ".1"
+        run: scripts/sign-firefox.sh
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           shopt -s nullglob
           signed=(dist/*-firefox-signed.xpi)
-          FF="**Firefox:** install from [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/windowed-video-fullscreen/), or download the signed \`.xpi\` below and open it in Firefox. The \`.xpi\` is added here automatically once Mozilla approves this version (usually within a few days). Either way, Firefox keeps it updated."
+          FF="**Firefox:** download the signed \`.xpi\` below and open it in Firefox, or install from [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/windowed-video-fullscreen/) once Mozilla has reviewed this version. Either way, Firefox updates it from addons.mozilla.org."
           cat > notes.md <<NOTES
           **Chrome, Edge, Brave, Opera, Vivaldi:** unzip the Chrome zip, open \`chrome://extensions\`, turn on Developer mode, click Load unpacked and pick the folder.
 

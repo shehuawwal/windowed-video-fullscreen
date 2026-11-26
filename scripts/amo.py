@@ -5,7 +5,6 @@ Needs AMO_JWT_ISSUER and AMO_JWT_SECRET in the environment
 (https://addons.mozilla.org/developers/addon/api/key/).
 
   scripts/amo.py status                 # listing status, versions, previews
-  scripts/amo.py download 2.1.0 dist    # signed .xpi, once AMO has approved that version
   scripts/amo.py edit amo/metadata.json # update listing text, categories, links
   scripts/amo.py previews [--resume] amo/screenshots/*.png  # replace (or finish uploading) screenshots
 """
