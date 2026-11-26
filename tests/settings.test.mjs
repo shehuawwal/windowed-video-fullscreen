@@ -36,6 +36,15 @@ test("merge keeps valid values and drops malformed ones", () => {
   assert.deepEqual(s.disabledSites, ["youtube.com", "example.org"]);
 });
 
+test("quality defaults to 1080 and accepts only known values", () => {
+  assert.equal(WVFS.merge({}).quality, "1080");
+  assert.equal(WVFS.merge({ quality: "" }).quality, "");
+  assert.equal(WVFS.merge({ quality: "720" }).quality, "720");
+  assert.equal(WVFS.merge({ quality: "999" }).quality, "1080");
+  assert.equal(WVFS.merge({ quality: 720 }).quality, "1080");
+  assert.equal(WVFS.forPage(WVFS.merge({ quality: "480" }), "x").quality, "480");
+});
+
 test("hostDisabled matches domains and subdomains only", () => {
   const list = ["example.com"];
   assert.equal(WVFS.hostDisabled("example.com", list), true);

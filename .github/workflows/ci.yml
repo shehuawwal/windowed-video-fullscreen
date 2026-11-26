@@ -49,7 +49,7 @@ jobs:
       - name: Check tag matches manifest version
         run: test "v$(jq -r .version manifests/chrome.json)" = "$GITHUB_REF_NAME"
       - run: ./scripts/build.sh
-      - name: Sign Firefox package (unlisted, only if AMO secrets are set)
+      - name: Submit to addons.mozilla.org (public listing, only if AMO secrets are set)
         if: env.AMO_JWT_ISSUER != '' && env.AMO_JWT_SECRET != ''
         continue-on-error: true
         run: scripts/sign-firefox.sh
@@ -59,11 +59,7 @@ jobs:
         run: |
           shopt -s nullglob
           signed=(dist/*-firefox-signed.xpi)
-          if (( ${#signed[@]} )); then
-            FF="**Firefox:** download the \`.xpi\` and open it in Firefox (or drag it onto a Firefox window) to install permanently."
-          else
-            FF="**Firefox:** no signed build this time. Load the Firefox zip from \`about:debugging\` → This Firefox → Load Temporary Add-on."
-          fi
+          FF="**Firefox:** install from [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/windowed-video-fullscreen/) (new versions appear there after Mozilla's review, and update automatically)."
           cat > notes.md <<NOTES
           **Chrome, Edge, Brave, Opera, Vivaldi:** unzip the Chrome zip, open \`chrome://extensions\`, turn on Developer mode, click Load unpacked and pick the folder.
 

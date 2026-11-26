@@ -1,0 +1,28 @@
+{
+  "slug": "windowed-video-fullscreen",
+  "name": {
+    "en-US": "Windowed Video Fullscreen"
+  },
+  "summary": {
+    "en-US": "Makes video fullscreen fill the browser tab instead of the whole screen, on every site. Custom shortcuts, and clicking the video never exits."
+  },
+  "description": {
+    "en-US": "Watch videos at full tab size while keeping your browser, other windows and second monitor usable.\n\nWhen a site asks for fullscreen, Windowed Video Fullscreen makes the video fill the browser tab instead of the whole screen. It works on every website: the site's own fullscreen button, the built-in video controls, and embedded players.\n\nFeatures\n• Works on any site, including embedded (iframe) players and plain video controls.\n• Choose your own keyboard shortcuts, with as many as you like for each action. Defaults: Ctrl + Shift + F to toggle, Esc to exit.\n• Clicking or double-clicking the video doesn't throw you out, and links around a player don't navigate away. The player's own exit button still works.\n• Switches to 1080p (or the quality you choose) when a video goes windowed, if the player offers it. Works on YouTube, JW Player, Video.js and hls.js players.\n• The player stays inside the page, so play/pause, the timeline and captions keep working.\n• Switch it off for one site, or everywhere, from the toolbar button.\n\nTip: press F11 first if you want the tab itself to cover the screen.\n\nPrivacy\nNo data collection, no network requests, no analytics. The only permission is storage, for your settings. Access to all websites is needed so it can run on any page that might have a video.\n\nOpen source (MIT): https://github.com/shehuawwal/windowed-video-fullscreen"
+  },
+  "categories": [
+    "photos-music-videos",
+    "tabs"
+  ],
+  "homepage": {
+    "en-US": "https://github.com/shehuawwal/windowed-video-fullscreen"
+  },
+  "support_url": {
+    "en-US": "https://github.com/shehuawwal/windowed-video-fullscreen/issues"
+  },
+  "tags": [
+    "youtube"
+  ],
+  "version": {
+    "license": "MIT"
+  }
+}

@@ -27,16 +27,18 @@ v1.1 was a private, Firefox-only content script. It moved the player into a full
 - [x] Toolbar popup: toggle, per-site and global on/off
 - [x] Unit tests, headless-Chrome behaviour harness, manual demo page, CI with release on tag
 - [ ] Manual check on real sites: YouTube, X, Vimeo, Twitch, Netflix, Facebook, Instagram, Reddit, embedded YouTube (owner, before publishing)
-- [ ] Make the GitHub repo public and tag v2.0.0
+- [x] Make the GitHub repo public and tag v2.0.0
 
 ### M2: distribution
 
 - Chrome Web Store listing (developer account, screenshots, privacy form that declares no data collection).
-- addons.mozilla.org listing. Firefox needs a signed xpi to install permanently. Add AMO signing to CI with `web-ext sign` and repo secrets.
+- [x] addons.mozilla.org public listing (2.1.0): metadata in `amo/`, screenshots from the demo page, CI submits each tag for review.
 - Edge Add-ons listing (the Chromium zip works as-is).
 - Safari: test the converted build, then decide whether App Store distribution is worth the yearly Apple developer fee.
 
 ### M3: quality
+
+- [x] Preferred video quality when windowed (2.1.0): YouTube, JW Player, Video.js, hls.js. Next: dash.js, Shaka, an option to apply to every video, not just windowed ones.
 
 - Per-site overrides (layout method, click protection) instead of only on/off.
 - Optional browser-level shortcut through the `commands` API. It works even when focus is in the address bar, and users edit it at `chrome://extensions/shortcuts` or in Firefox's add-on manager.

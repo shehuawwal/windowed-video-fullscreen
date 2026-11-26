@@ -76,6 +76,21 @@
           <span class="muted small">Recommended if your shortcut is a single key.</span></span>
       </label>
 
+      <div class="field">
+        <label for="quality"><strong>Video quality when windowed</strong></label>
+        <select id="quality">
+          <option value="">Keep the site's choice</option>
+          <option value="2160">2160p (4K)</option>
+          <option value="1440">1440p</option>
+          <option value="1080">1080p</option>
+          <option value="720">720p</option>
+          <option value="480">480p</option>
+          <option value="360">360p</option>
+        </select>
+        <p class="muted small">Switches to this quality when a video goes windowed, if the player offers it. Otherwise the site's own choice is kept.
+          Works on YouTube and on sites that use JW Player, Video.js or hls.js. Sites such as Netflix, Twitch and Vimeo keep their own quality.</p>
+      </div>
+
       <fieldset>
         <legend><strong>Layout method</strong></legend>
         <label class="check">

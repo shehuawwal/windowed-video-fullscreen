@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Store screenshot</title>
+<!-- Store screenshot composer (1280x800). Used by scripts/screenshots.sh: shot.html?scene=1..4 -->
+<style>
+  html, body { margin: 0; width: 1280px; height: 800px; overflow: hidden; }
+  body { background: linear-gradient(135deg, #312e81, #4f46e5 60%, #6366f1); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #fff; }
+  .caption { height: 112px; display: flex; flex-direction: column; justify-content: center; padding: 0 64px; }
+  .caption h1 { margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -0.01em; }
+  .caption p { margin: 6px 0 0; font-size: 18px; opacity: .85; }
+  .window { position: absolute; left: 64px; right: 64px; top: 112px; bottom: 0; background: #f9f9fb; border-radius: 12px 12px 0 0; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+  .bar { height: 76px; background: #e8e8ed; border-bottom: 1px solid #d4d4da; position: relative; }
+  .tabs { height: 36px; display: flex; align-items: flex-end; padding-left: 80px; gap: 4px; }
+  .dots { position: absolute; left: 16px; top: 13px; display: flex; gap: 8px; }
+  .dots i { width: 12px; height: 12px; border-radius: 50%; background: #c9c9cf; display: block; }
+  .tab { height: 30px; padding: 0 14px; display: flex; align-items: center; font-size: 12px; color: #444; border-radius: 8px 8px 0 0; min-width: 170px; }
+  .tab.on { background: #f9f9fb; color: #111; }
+  .url { position: absolute; left: 80px; right: 60px; top: 42px; height: 26px; background: #fff; border-radius: 6px; font-size: 13px; color: #555; display: flex; align-items: center; padding: 0 12px; }
+  .ext { position: absolute; right: 18px; top: 44px; width: 22px; height: 22px; border-radius: 5px; background: url(../src/icons/icon-32.png) center / 20px no-repeat; }
+  .ext.on { outline: 2px solid #4f46e5; outline-offset: 2px; }
+  iframe { position: absolute; top: 77px; left: 0; border: 0; width: 100%; height: calc(100% - 77px); background: #fff; }
+  .popup { position: absolute; left: auto; right: 10px; top: 72px; width: 300px; height: 272px; border: 0; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.3); z-index: 2; background: #1c1b22; }
+  .note { position: absolute; z-index: 3; background: #111827; color: #fff; font-size: 15px; padding: 10px 14px; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+</style>
+</head>
+<body>
+<div class="caption"><h1 id="h"></h1><p id="s"></p></div>
+<div class="window">
+  <div class="bar">
+    <div class="dots"><i></i><i></i><i></i></div>
+    <div class="tabs"><div class="tab on" id="tabtitle">Video page</div><div class="tab">Mail</div><div class="tab">Docs</div></div>
+    <div class="url" id="url">localhost/demo/</div>
+    <div class="ext" id="ext"></div>
+  </div>
+  <iframe id="page" title="page"></iframe>
+</div>
+<script>
+const scene = new URLSearchParams(location.search).get("scene") || "1";
+const $ = (id) => document.getElementById(id);
+const page = $("page");
+
+function injectExtension(win) {
+  return new Promise((res) => {
+    const s = win.document.createElement("script");
+    s.src = "/src/page.js";
+    s.onload = res;
+    win.document.head.append(s);
+  });
+}
+
+const scenes = {
+  "1": async () => {
+    $("h").textContent = "Fullscreen video, inside your tab";
+    $("s").textContent = "Your tabs, other windows and second screen stay usable.";
+    page.src = "/demo/index.html";
+    page.onload = async () => {
+      const w = page.contentWindow;
+      await injectExtension(w);
+      await w.document.getElementById("custom").requestFullscreen();
+    };
+  },
+  "2": async () => {
+    $("h").textContent = "Clicking the video never kicks you out";
+    $("s").textContent = "Works with each site's own player, controls and buttons.";
+    page.src = "/demo/index.html";
+    page.onload = async () => {
+      const w = page.contentWindow;
+      await injectExtension(w);
+      await w.document.getElementById("feedPlayer").requestFullscreen();
+      const n = document.createElement("div");
+      n.className = "note";
+      n.style.cssText = "right: 40px; top: 120px";
+      n.textContent = "Click, double-click: still windowed. Esc or the player's button to exit.";
+      document.querySelector(".window").append(n);
+    };
+  },
+  "3": async () => {
+    $("h").textContent = "Pick your own shortcuts";
+    $("s").textContent = "Any key combination, as many as you like. Plus per-site on/off.";
+    $("tabtitle").textContent = "Settings";
+    $("url").textContent = "Windowed Video Fullscreen — Settings";
+    page.src = "/dist/chrome/options/_preview.html";
+  },
+  "4": async () => {
+    $("h").textContent = "One click from the toolbar";
+    $("s").textContent = "Toggle the video, or switch the extension off for a site.";
+    page.src = "/demo/index.html";
+    page.onload = () => {
+      const d = page.contentDocument;
+      d.querySelector("body > p").remove(); // developer instructions
+      d.querySelector("h1").textContent = "My video page";
+    };
+    $("ext").classList.add("on");
+    const pop = document.createElement("iframe");
+    pop.className = "popup";
+    pop.src = "/dist/chrome/popup/_preview.html";
+    document.querySelector(".window").append(pop);
+  }
+};
+scenes[scene]();
+</script>
+</body>
+</html>

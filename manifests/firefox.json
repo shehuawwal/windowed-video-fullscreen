@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Windowed Video Fullscreen",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Makes video fullscreen fill the browser tab instead of the whole screen, on every site. Custom shortcuts, click-safe.",
   "homepage_url": "https://github.com/shehuawwal/windowed-video-fullscreen",
   "icons": {

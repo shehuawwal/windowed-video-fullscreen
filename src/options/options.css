@@ -99,6 +99,21 @@ fieldset {
 }
 legend { padding: 0 4px; }
 
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field select {
+  align-self: flex-start;
+  font: inherit;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--fg);
+}
+
 .add-site {
   display: flex;
   gap: 8px;

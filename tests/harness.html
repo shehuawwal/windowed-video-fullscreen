@@ -166,6 +166,73 @@
     key("KeyF", { ctrlKey: true, shiftKey: true });
     ok("site disabled: shortcut does nothing", document.fullscreenElement === null);
     settings({ enabled: true, siteDisabled: false });
+
+    // 12. Preferred quality (default 1080p) on supported players.
+    await sleep(700);
+    const mk = (html) => { const d = document.createElement("div"); d.innerHTML = html; document.body.prepend(d.firstElementChild); return document.body.firstElementChild; };
+
+    // YouTube-like player: methods on .html5-video-player
+    const yt = mk('<div class="html5-video-player" style="width:400px;height:225px"><video muted style="width:400px;height:225px"></video></div>');
+    let ytSet = null;
+    yt.getAvailableQualityLevels = () => ["hd1440", "hd1080", "hd720", "large", "auto"];
+    yt.setPlaybackQualityRange = (a) => { ytSet = a; };
+    await yt.requestFullscreen();
+    ok("quality: YouTube switched to hd1080", ytSet === "hd1080", String(ytSet));
+    await document.exitFullscreen();
+
+    // Levels not offered: keep the site's choice.
+    yt.getAvailableQualityLevels = () => ["hd720", "large", "auto"];
+    ytSet = null;
+    await yt.requestFullscreen();
+    ok("quality: no 1080p offered -> unchanged", ytSet === null, String(ytSet));
+    await document.exitFullscreen();
+
+    // Levels load late: retried.
+    let ready = false;
+    yt.getAvailableQualityLevels = () => (ready ? ["hd1080", "hd720"] : []);
+    ytSet = null;
+    await yt.requestFullscreen();
+    setTimeout(() => (ready = true), 300);
+    await sleep(1200);
+    ok("quality: retried until levels loaded", ytSet === "hd1080", String(ytSet));
+    await document.exitFullscreen();
+
+    // "Keep the site's choice"
+    settings({ quality: "" });
+    ytSet = null;
+    await yt.requestFullscreen();
+    await sleep(100);
+    ok("quality: off -> unchanged", ytSet === null);
+    await document.exitFullscreen();
+    settings({ quality: "720" });
+    yt.getAvailableQualityLevels = () => ["hd1080", "hd720"];
+    await yt.requestFullscreen();
+    ok("quality: custom preference 720 -> hd720", ytSet === "hd720", String(ytSet));
+    await document.exitFullscreen();
+    settings({ quality: "1080" });
+    yt.remove();
+
+    // hls.js: the site assigns window.Hls after page.js has run.
+    window.Hls = class { constructor() { this.levels = [{ height: 480 }, { height: 720 }, { height: 1080 }]; this.nextLevel = -1; } attachMedia(m) { this.media = m; } destroy() {} static isSupported() { return true; } };
+    ok("hls.js: static methods still work", window.Hls.isSupported() === true);
+    const hv = mk('<video muted style="width:400px;height:225px"></video>');
+    const hls = new window.Hls();
+    hls.attachMedia(hv);
+    await hv.requestFullscreen();
+    ok("quality: hls.js nextLevel set to the 1080p level", hls.nextLevel === 2, String(hls.nextLevel));
+    await document.exitFullscreen();
+    hv.remove();
+
+    // Video.js with the quality-levels plugin.
+    const vjsBox = mk('<div style="width:400px;height:225px"><video muted style="width:400px;height:225px"></video></div>');
+    const levels = [{ height: 1080, enabled: true }, { height: 720, enabled: true }, { height: 1080, enabled: true }];
+    levels.length = 3;
+    window.videojs = { getPlayers: () => ({ p: { el: () => vjsBox, qualityLevels: () => levels } }) };
+    await vjsBox.querySelector("video").requestFullscreen();
+    ok("quality: Video.js enables only 1080p levels", levels[0].enabled && !levels[1].enabled && levels[2].enabled);
+    await document.exitFullscreen();
+    vjsBox.remove();
+    delete window.videojs;
   } catch (err) {
     ok("harness crashed", false, String(err && err.stack || err));
   }

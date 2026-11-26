@@ -25,7 +25,13 @@ manifests/
 scripts/
   build.sh             src/ + manifest -> dist/<browser>/ and dist/*.zip
   safari.sh            dist/chrome -> Xcode project (macOS)
-  sign-firefox.sh      sign dist/firefox on AMO (unlisted) -> dist/*-firefox-signed.xpi
+  sign-firefox.sh      submit dist/firefox to AMO (listed by default; unlisted -> signed .xpi)
+  amo.py               AMO API client: listing status, metadata, screenshots
+  screenshots.sh       regenerate amo/screenshots/*.png
+amo/
+  metadata.json        AMO listing text, categories, links, licence
+  shot.html            screenshot composer (browser frame + demo page)
+  screenshots/         store screenshots (1280x800)
   make-icons.py        draws src/icons/*.png with no dependencies
 tests/
   settings.test.mjs    node --test unit tests for shared/settings.js
@@ -58,9 +64,11 @@ docs/PLAN.md           roadmap and design decisions
 
    When a child enters, the parent windows its `<iframe>` element (`kind: "frame"`). The protocol nests to any depth.
 
-7. **Settings.** `bridge.js` reads `storage.sync`, merges it with the defaults (`WVFS.merge`), works out `siteDisabled` for its own hostname, and dispatches `wvfs:settings` on `document` with a JSON **string** detail. Objects don't cross the Firefox world boundary, so it must stay a string. page.js sends `wvfs:hello` when it starts, in case it loaded after the bridge's first send.
+7. **Preferred quality.** No standard API exists, so `qualityAdapters` in page.js has one adapter per player (YouTube `.html5-video-player`, JW Player, Video.js `qualityLevels`, hls.js). Each adapter has `find(video)`, `levels(player)` → `[{id, height}]` and `set(player, level)`. On `enter()` (kind `"self"`), `applyQuality` sets the exact preferred height. If that height isn't offered, it changes nothing. While the player or its levels aren't ready, it retries up to 6 times. hls.js has no instance registry, so page.js wraps `window.Hls` with an accessor and subclasses the constructor to track instances. Add a player by adding an adapter plus a harness case.
 
-8. **Popup.** It messages the top frame's bridge (`frameId: 0`) with `status` or `toggle`. The bridge asks page.js synchronously with `wvfs:query` and `wvfs:state` events.
+8. **Settings.** `bridge.js` reads `storage.sync`, merges it with the defaults (`WVFS.merge`), works out `siteDisabled` for its own hostname, and dispatches `wvfs:settings` on `document` with a JSON **string** detail. Objects don't cross the Firefox world boundary, so it must stay a string. page.js sends `wvfs:hello` when it starts, in case it loaded after the bridge's first send.
+
+9. **Popup.** It messages the top frame's bridge (`frameId: 0`) with `status` or `toggle`. The bridge asks page.js synchronously with `wvfs:query` and `wvfs:state` events.
 
 ## Rules
 
@@ -89,6 +97,7 @@ When you change behaviour in page.js, add a case to `tests/harness.html`. Then l
 
 1. Bump `version` in `manifests/chrome.json` and `manifests/firefox.json` and update `CHANGELOG.md`.
 2. Commit, then tag `vX.Y.Z` and push the tag. CI tests, builds, and attaches the zips to a GitHub release.
-3. Firefox: if the repo secrets `AMO_JWT_ISSUER` / `AMO_JWT_SECRET` are set, the release job signs an **unlisted** `.xpi` (`scripts/sign-firefox.sh`) and attaches it. AMO never signs the same version twice, so a version that's already signed needs a version bump. To sign a release made before the secrets existed: `gh workflow run sign-firefox.yml -f tag=vX.Y.Z`.
+3. Firefox is **listed** on AMO: https://addons.mozilla.org/firefox/addon/windowed-video-fullscreen/. With the repo secrets `AMO_JWT_ISSUER` / `AMO_JWT_SECRET` set, the release job submits the version for Mozilla's review (`scripts/sign-firefox.sh`, listing text from `amo/metadata.json`). There's no `.xpi` to attach, because users install from AMO and get automatic updates. AMO accepts each version number once (across listed and unlisted), so resubmitting needs a version bump. To submit an existing tag: `gh workflow run sign-firefox.yml -f tag=vX.Y.Z` (add `-f channel=unlisted` for a self-hosted signed `.xpi`).
+   - Listing screenshots: `scripts/screenshots.sh` regenerates `amo/screenshots/*.png` from `amo/shot.html` and the demo page. Upload them with `scripts/amo.py previews amo/screenshots/*.png`. AMO limits uploads per hour, and the script waits it out. `scripts/amo.py edit amo/metadata.json` updates the listing text, and `scripts/amo.py status` shows review state.
 4. Firefox add-on ID: `windowed-video-fullscreen@shehuawwal.github.io`. Never change it, or installed copies stop updating.
-5. Store listings (Chrome Web Store, public AMO listing, Edge Add-ons) are manual for now. See docs/PLAN.md.
+5. Chrome Web Store and Edge Add-ons listings are manual for now. See docs/PLAN.md.

@@ -13,12 +13,15 @@ var WVFS = (() => {
     clickProtection: true,
     convertNative: true,
     ignoreWhileTyping: true,
+    quality: "1080", // preferred height when a video goes windowed; "" = keep the site's choice
     shortcuts: {
       toggle: [{ code: "KeyF", key: "F", ctrl: true, shift: true, alt: false, meta: false }],
       exit: [{ code: "Escape", key: "Escape", ctrl: false, shift: false, alt: false, meta: false }]
     },
     disabledSites: []
   });
+
+  const QUALITIES = ["", "2160", "1440", "1080", "720", "480", "360"];
 
   const MODIFIER_CODES = new Set([
     "ShiftLeft", "ShiftRight", "ControlLeft", "ControlRight", "AltLeft", "AltRight",
@@ -62,6 +65,7 @@ var WVFS = (() => {
       if (typeof s[k] === "boolean") out[k] = s[k];
     }
     if (s.mode === "inplace" || s.mode === "overlay") out.mode = s.mode;
+    if (typeof s.quality === "string" && QUALITIES.includes(s.quality)) out.quality = s.quality;
     if (s.shortcuts && typeof s.shortcuts === "object") {
       for (const action of ["toggle", "exit"]) {
         if (Array.isArray(s.shortcuts[action])) {
@@ -127,12 +131,14 @@ var WVFS = (() => {
       clickProtection: settings.clickProtection,
       convertNative: settings.convertNative,
       ignoreWhileTyping: settings.ignoreWhileTyping,
+      quality: settings.quality,
       shortcuts: settings.shortcuts
     };
   }
 
   return {
     DEFAULTS,
+    QUALITIES,
     MODIFIER_CODES,
     merge,
     normalizeHost,

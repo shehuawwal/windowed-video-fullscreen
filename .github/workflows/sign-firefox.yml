@@ -1,14 +1,20 @@
-name: Sign Firefox build
+name: Submit Firefox build
 
-# Signs an already-released version and attaches the .xpi to its GitHub release.
-# Use it after adding the AMO secrets, without making a new tag:
-#   gh workflow run sign-firefox.yml -f tag=v2.0.0
+# Submits an already-released version to addons.mozilla.org without a new tag.
+#   gh workflow run sign-firefox.yml -f tag=v2.1.0                     # public listing (review)
+#   gh workflow run sign-firefox.yml -f tag=v2.1.0 -f channel=unlisted # signed .xpi, attached to the release
+# AMO accepts each version number once, across both channels.
 on:
   workflow_dispatch:
     inputs:
       tag:
         description: Release tag to sign (e.g. v2.0.0)
         required: true
+      channel:
+        description: listed (public, reviewed) or unlisted (self-distributed .xpi)
+        default: listed
+        type: choice
+        options: [listed, unlisted]
 
 permissions:
   contents: write
@@ -19,6 +25,7 @@ jobs:
     env:
       AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
       AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+      AMO_CHANNEL: ${{ inputs.channel }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v7
@@ -29,5 +36,6 @@ jobs:
           node-version: 24
       - run: ./scripts/build.sh
       - run: scripts/sign-firefox.sh
-      - name: Attach to release
+      - name: Attach signed .xpi to the release (unlisted only)
+        if: inputs.channel == 'unlisted'
         run: gh release upload "${{ inputs.tag }}" dist/*-firefox-signed.xpi --clobber

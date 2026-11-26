@@ -43,6 +43,7 @@
     clickProtection: true,
     convertNative: true,
     ignoreWhileTyping: true,
+    quality: "1080", // preferred height when windowed; "" = leave the site's choice
     shortcuts: {
       toggle: [{ code: "KeyF", ctrl: true, shift: true, alt: false, meta: false }],
       exit: [{ code: "Escape", ctrl: false, shift: false, alt: false, meta: false }]
@@ -443,6 +444,7 @@
 
   function teardown() {
     clearTimeout(state.reacquireTimer);
+    clearTimeout(qualityTimer);
     state.reacquireTimer = 0;
     const target = state.target;
     if (state.mode === "overlay" && target && state.placeholder) {
@@ -497,6 +499,7 @@
       postTo(window.parent, { type: "child-enter" });
     }
     fireChange(el);
+    if (kind === "self") applyQuality(isVideo(el) ? el : largestVideo(state.target));
     return true;
   }
 
@@ -638,6 +641,162 @@
     },
     true
   );
+
+  // ---------------------------------------------------------------------------
+  // Preferred video quality (e.g. 1080p) when a video goes windowed
+  //
+  // There is no standard API for this, so each supported player gets an
+  // adapter: find(video) -> player, levels(player) -> [{id, height}],
+  // set(player, level). If the player doesn't offer the preferred height,
+  // nothing is changed and the site's own choice stays.
+  // ---------------------------------------------------------------------------
+
+  const hlsInstances = new Set();
+  let qualityTimer = 0;
+
+  // hls.js has no instance registry. Wrap the global constructor when the
+  // site's bundle assigns window.Hls, so new players are tracked.
+  (function hookHls() {
+    let current;
+    const wrap = (H) => {
+      if (typeof H !== "function" || H.__wvfsWrapped) return H;
+      try {
+        class Hls extends H {
+          constructor(...args) {
+            super(...args);
+            hlsInstances.add(this);
+            const destroy = this.destroy;
+            if (typeof destroy === "function") {
+              this.destroy = function () {
+                hlsInstances.delete(this);
+                return destroy.apply(this, arguments);
+              };
+            }
+          }
+        }
+        Object.defineProperty(Hls, "__wvfsWrapped", { value: true });
+        return Hls;
+      } catch (_) {
+        return H;
+      }
+    };
+    try {
+      const existing = window.Hls;
+      Object.defineProperty(window, "Hls", {
+        configurable: true,
+        enumerable: false,
+        get() {
+          return current;
+        },
+        set(v) {
+          current = wrap(v);
+        }
+      });
+      if (existing) current = wrap(existing);
+    } catch (_) {}
+  })();
+
+  const YT_HEIGHTS = { highres: 4320, hd2160: 2160, hd1440: 1440, hd1080: 1080, hd720: 720, large: 480, medium: 360, small: 240, tiny: 144 };
+
+  function closestUp(node, test) {
+    for (let n = node; n; n = flatParent(n)) if (n instanceof Element && test(n)) return n;
+    return null;
+  }
+
+  const qualityAdapters = [
+    {
+      name: "youtube",
+      find: (video) =>
+        closestUp(video, (n) => n.classList.contains("html5-video-player") && typeof n.getAvailableQualityLevels === "function"),
+      levels: (p) => (p.getAvailableQualityLevels() || []).filter((q) => YT_HEIGHTS[q]).map((q) => ({ id: q, height: YT_HEIGHTS[q] })),
+      set: (p, l) => {
+        if (typeof p.setPlaybackQualityRange === "function") p.setPlaybackQualityRange(l.id, l.id);
+        if (typeof p.setPlaybackQuality === "function") p.setPlaybackQuality(l.id);
+      }
+    },
+    {
+      name: "jwplayer",
+      find: (video) => {
+        if (typeof window.jwplayer !== "function") return null;
+        const box = closestUp(video, (n) => n.classList.contains("jwplayer") && !!n.id);
+        const p = box && window.jwplayer(box.id);
+        return p && typeof p.getQualityLevels === "function" ? p : null;
+      },
+      levels: (p) =>
+        (p.getQualityLevels() || []).map((q, i) => ({ id: i, height: q.height || parseInt(q.label, 10) || 0 })),
+      set: (p, l) => p.setCurrentQuality(l.id)
+    },
+    {
+      name: "videojs",
+      find: (video) => {
+        const vjs = window.videojs;
+        if (!vjs || typeof vjs.getPlayers !== "function") return null;
+        for (const p of Object.values(vjs.getPlayers() || {})) {
+          if (p && typeof p.el === "function" && p.el() && p.el().contains(video) && typeof p.qualityLevels === "function") return p;
+        }
+        return null;
+      },
+      levels: (p) => {
+        const ql = p.qualityLevels();
+        const out = [];
+        for (let i = 0; i < ql.length; i++) out.push({ id: i, height: ql[i].height });
+        return out;
+      },
+      set: (p, l) => {
+        const ql = p.qualityLevels();
+        for (let i = 0; i < ql.length; i++) ql[i].enabled = ql[i].height === l.height;
+      }
+    },
+    {
+      name: "hls.js",
+      find: (video) => {
+        for (const h of hlsInstances) if (h.media === video) return h;
+        return null;
+      },
+      levels: (h) => (h.levels || []).map((lv, i) => ({ id: i, height: lv.height })),
+      set: (h, l) => {
+        h.nextLevel = l.id;
+      }
+    }
+  ];
+
+  // Returns "set" | "unavailable" | "pending" (player or its levels not ready yet).
+  function trySetQuality(video, want) {
+    for (const a of qualityAdapters) {
+      let p = null;
+      try {
+        p = a.find(video);
+      } catch (_) {}
+      if (!p) continue;
+      let levels = [];
+      try {
+        levels = a.levels(p);
+      } catch (_) {}
+      if (!levels.length) return "pending";
+      const match = levels.find((l) => l.height === want);
+      if (!match) return "unavailable";
+      try {
+        a.set(p, match);
+        return "set";
+      } catch (_) {
+        return "unavailable";
+      }
+    }
+    return "pending";
+  }
+
+  function applyQuality(video) {
+    clearTimeout(qualityTimer);
+    const want = parseInt(settings.quality, 10);
+    if (!want || !video) return;
+    let tries = 0;
+    const attempt = () => {
+      if (!state.active) return;
+      if (trySetQuality(video, want) !== "pending") return;
+      if (++tries < 6) qualityTimer = setTimeout(attempt, 600 * tries); // players load levels late
+    };
+    attempt();
+  }
 
   // ---------------------------------------------------------------------------
   // Patch the Fullscreen API

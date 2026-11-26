@@ -120,6 +120,7 @@
   for (const key of ["enabled", "clickProtection", "convertNative", "ignoreWhileTyping"]) {
     $("#" + key).addEventListener("change", (e) => save({ [key]: e.target.checked }));
   }
+  $("#quality").addEventListener("change", (e) => save({ quality: e.target.value }));
   for (const radio of document.querySelectorAll('input[name="mode"]')) {
     radio.addEventListener("change", (e) => e.target.checked && save({ mode: e.target.value }));
   }
@@ -127,6 +128,7 @@
   function renderBehaviour() {
     for (const key of ["enabled", "clickProtection", "convertNative", "ignoreWhileTyping"]) $("#" + key).checked = settings[key];
     for (const radio of document.querySelectorAll('input[name="mode"]')) radio.checked = radio.value === settings.mode;
+    $("#quality").value = settings.quality;
   }
 
   // ---- Sites ---------------------------------------------------------------
