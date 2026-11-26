@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.1 — 2026-11-26
+
+- Firefox now requires version 140 or newer (Android: 142), the first versions that understand the add-on's data-collection declaration. Clears the two warnings shown by Mozilla's validator. No other changes.
+
 ## 2.0.0 — 2026-11-26
 
 First open-source release; rewrite of the private Firefox-only v1.1.

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Windowed Video Fullscreen",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Makes video fullscreen fill the browser tab instead of the whole screen, on every site. Custom shortcuts, click-safe.",
   "homepage_url": "https://github.com/shehuawwal/windowed-video-fullscreen",
   "icons": {
@@ -22,19 +22,30 @@
     "page": "options/options.html",
     "open_in_tab": true
   },
-  "permissions": ["storage"],
+  "permissions": [
+    "storage"
+  ],
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["page.js"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "page.js"
+      ],
       "run_at": "document_start",
       "all_frames": true,
       "match_about_blank": true,
       "world": "MAIN"
     },
     {
-      "matches": ["<all_urls>"],
-      "js": ["shared/settings.js", "bridge.js"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "shared/settings.js",
+        "bridge.js"
+      ],
       "run_at": "document_start",
       "all_frames": true,
       "match_about_blank": true

@@ -38,7 +38,7 @@ This creates `dist/chrome/` and `dist/firefox/` (plus zips).
 2. Turn on **Developer mode**.
 3. Click **Load unpacked** and pick the `dist/chrome` folder.
 
-**Firefox (128 or newer)**
+**Firefox (140 or newer; Android 142 or newer)**
 
 1. Open `about:debugging#/runtime/this-firefox`.
 2. Click **Load Temporary Add-on…** and pick `dist/firefox/manifest.json`.

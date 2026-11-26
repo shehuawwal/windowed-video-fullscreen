@@ -54,7 +54,7 @@ v1.1 was a private, Firefox-only content script. It moved the player into a full
 
 | Decision | Why |
 |---|---|
-| Patch the Fullscreen API in the MAIN world at `document_start` | The only way to catch every site's fullscreen call before it runs. Supported by `world: "MAIN"` in Chrome 111+ and Firefox 128+. |
+| Patch the Fullscreen API in the MAIN world at `document_start` | The only way to catch every site's fullscreen call before it runs. Supported by `world: "MAIN"` in Chrome 111+ and Firefox 128+ (we require 140+, the first version with `data_collection_permissions`). |
 | "In place" as the default layout | Keeps the player inside the site's DOM, so framework event handling (React's root listener) and the player's controls keep working. |
 | Shortcuts handled in the page, not through the `commands` API | Allows any key, single keys and several shortcuts per action, and works the same in every browser. Trade-off: the shortcut needs focus on the page. |
 | Settings passed as a JSON string on a DOM event | Crosses the isolated/MAIN world boundary in both Chrome and Firefox without `cloneInto`. |
