@@ -20,6 +20,7 @@
       $("shortcut").textContent = "none set";
     }
     $("global").checked = settings.enabled;
+    $("quality").value = settings.quality;
     $("site").checked = !WVFS.hostDisabled(host, settings.disabledSites);
     $("site").disabled = !host;
   }
@@ -61,6 +62,8 @@
     } catch (_) {}
     window.close();
   });
+
+  $("quality").addEventListener("change", (e) => api.storage.sync.set({ quality: e.target.value }));
 
   $("global").addEventListener("change", async (e) => {
     await api.storage.sync.set({ enabled: e.target.checked });

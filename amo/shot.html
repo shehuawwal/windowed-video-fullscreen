@@ -21,7 +21,7 @@
   .ext { position: absolute; right: 18px; top: 44px; width: 22px; height: 22px; border-radius: 5px; background: url(../src/icons/icon-32.png) center / 20px no-repeat; }
   .ext.on { outline: 2px solid #4f46e5; outline-offset: 2px; }
   iframe { position: absolute; top: 77px; left: 0; border: 0; width: 100%; height: calc(100% - 77px); background: #fff; }
-  .popup { position: absolute; left: auto; right: 10px; top: 72px; width: 300px; height: 272px; border: 0; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.3); z-index: 2; background: #1c1b22; }
+  .popup { position: absolute; left: auto; right: 10px; top: 72px; width: 300px; height: 340px; border: 0; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.3); z-index: 2; background: #1c1b22; }
   .note { position: absolute; z-index: 3; background: #111827; color: #fff; font-size: 15px; padding: 10px 14px; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
 </style>
 </head>
@@ -85,7 +85,7 @@ const scenes = {
   },
   "4": async () => {
     $("h").textContent = "One click from the toolbar";
-    $("s").textContent = "Toggle the video, or switch the extension off for a site.";
+    $("s").textContent = "Toggle the video, pick the quality, or switch it off for a site.";
     page.src = "/demo/index.html";
     page.onload = () => {
       const d = page.contentDocument;

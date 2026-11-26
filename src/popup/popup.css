@@ -32,6 +32,21 @@ main {
 
 #host { word-break: break-all; }
 
+.quality {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.quality select {
+  font: inherit;
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--fg);
+}
+
 footer {
   border-top: 1px solid var(--line);
   padding-top: 10px;

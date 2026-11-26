@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.1 — 2026-11-26
+
+- Video quality is easier to find: it's in the toolbar popup, and has its own section near the top of the settings page.
+
 ## 2.1.0 — 2026-11-26
 
 - **Preferred video quality**: when a video goes windowed, it switches to 1080p (or the quality you pick in settings) if the player offers it, and otherwise keeps the site's choice. Works on YouTube, JW Player, Video.js and hls.js players.
