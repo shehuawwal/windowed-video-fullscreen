@@ -59,7 +59,7 @@ jobs:
         run: |
           shopt -s nullglob
           signed=(dist/*-firefox-signed.xpi)
-          FF="**Firefox:** install from [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/windowed-video-fullscreen/) (new versions appear there after Mozilla's review, and update automatically)."
+          FF="**Firefox:** install from [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/windowed-video-fullscreen/), or download the signed \`.xpi\` below and open it in Firefox. The \`.xpi\` is added here automatically once Mozilla approves this version (usually within a few days). Either way, Firefox keeps it updated."
           cat > notes.md <<NOTES
           **Chrome, Edge, Brave, Opera, Vivaldi:** unzip the Chrome zip, open \`chrome://extensions\`, turn on Developer mode, click Load unpacked and pick the folder.
 

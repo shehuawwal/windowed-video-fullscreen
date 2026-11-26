@@ -5,6 +5,7 @@ Needs AMO_JWT_ISSUER and AMO_JWT_SECRET in the environment
 (https://addons.mozilla.org/developers/addon/api/key/).
 
   scripts/amo.py status                 # listing status, versions, previews
+  scripts/amo.py download 2.1.0 dist    # signed .xpi, once AMO has approved that version
   scripts/amo.py edit amo/metadata.json # update listing text, categories, links
   scripts/amo.py previews [--resume] amo/screenshots/*.png  # replace (or finish uploading) screenshots
 """
@@ -102,6 +103,27 @@ def previews(paths, keep_existing=False):
         print("uploaded", path)
 
 
+def download(version, out_dir):
+    """Download the signed .xpi for `version` if AMO has approved it.
+    Exit code 0 = downloaded, 3 = not signed/approved yet."""
+    vs = call("GET", addon_path() + "versions/?filter=all_with_unlisted&page_size=50")
+    for v in vs.get("results", []):
+        if v["version"] != version:
+            continue
+        f = v.get("file") or {}
+        if f.get("status") != "public" or not f.get("url"):
+            print(f"{version}: not approved yet (file status: {f.get('status')})")
+            sys.exit(3)
+        req = urllib.request.Request(f["url"], headers={"Authorization": "JWT " + token()})
+        dest = os.path.join(out_dir, f"windowed-video-fullscreen-{version}-firefox-signed.xpi")
+        with urllib.request.urlopen(req, timeout=120) as r, open(dest, "wb") as fh:
+            fh.write(r.read())
+        print(f"{version}: downloaded {dest} ({v.get('channel')})")
+        return
+    print(f"{version}: not on AMO")
+    sys.exit(3)
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "status"
     if cmd == "status":
@@ -112,5 +134,7 @@ if __name__ == "__main__":
         args = sys.argv[2:]
         resume = "--resume" in args
         previews([a for a in args if a != "--resume"], keep_existing=resume)
+    elif cmd == "download":  # download VERSION [DIR]
+        download(sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else ".")
     else:
         sys.exit(__doc__)
