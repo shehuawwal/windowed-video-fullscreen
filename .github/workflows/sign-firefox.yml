@@ -31,7 +31,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+      - name: Use the extension source from the tag, scripts from main
+        run: git checkout "${{ inputs.tag }}" -- src manifests
       - uses: actions/setup-node@v7
         with:
           node-version: 24
